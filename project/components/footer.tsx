@@ -66,11 +66,11 @@ export function Footer() {
                   <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">
                     Chare Uzi Island
                   </h3>
-                  <p className="text-xs text-slate-500">Luxury Travel</p>
+                  <p className="text-xs text-slate-500">Luxury hotel and tours</p>
                 </div>
               </Link>
               <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                Creating unforgettable travel experiences with world-class hospitality and exceptional service across the globe.
+                Creating unforgettable travel experiences with world-class hospitality and exceptional service across the globe by chare uzi island.
               </p>
               <div className="flex gap-3">
                 {[
@@ -102,7 +102,7 @@ export function Footer() {
                 {[
                   { name: 'Home', href: '/' },
                   { name: 'Hotels', href: '/hotels' },
-                  { name: 'Destinations', href: '/destinations' },
+                  { name: 'Tours', href: '/destinations' },
                   { name: 'About Us', href: '/about' },
                   { name: 'Contact', href: '/contact' },
                 ].map((link) => (
@@ -176,7 +176,7 @@ export function Footer() {
                   <MapPin className="w-5 h-5 text-emerald-400 mt-1 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
                     <p className="text-xs text-slate-500 uppercase tracking-wider">Location</p>
-                    <p className="text-slate-300">123 Travel Avenue, Suite 500, New York, NY 10001</p>
+                    <p className="text-slate-300">Chare uzi island, Zanzibar</p>
                   </div>
                 </li>
               </ul>
@@ -189,7 +189,7 @@ export function Footer() {
               <p className="text-slate-400 text-sm">
                 &copy; {new Date().getFullYear()} Chare Uzi Island. All rights reserved.
                 <span className="inline-flex items-center gap-1 ml-2">
-                  Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> for travel lovers
+                  Made for travel lovers
                 </span>
               </p>
               <div className="flex flex-wrap gap-6 justify-center md:justify-end">

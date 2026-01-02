@@ -23,6 +23,7 @@ export function Header() {
     { name: 'About', href: '/about' },
     { name: 'Hotels', href: '/hotels' },
     { name: 'Tours', href: '/destinations' },
+    { name: 'Gallery', href: '/gallery' },
     { name: 'Contact', href: '/contact' },
   ];
 
