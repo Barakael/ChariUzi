@@ -1,77 +1,173 @@
 'use client';
 
+import { useState } from 'react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { HotelCard } from '@/components/hotel-card';
+import { Button } from '@/components/ui/button';
 
 const mockHotels = [
+  // Guest Areas
   {
-    name: 'Luxury Beach Resort',
+    name: 'Standard Room',
     description: 'Experience ultimate luxury by the sea with world-class amenities',
-    location: 'Maldives',
+    location: 'Uzi island, zanzibar',
     image_url: 'https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg',
     rating: 4.9,
     price_per_night: 450,
-    amenities: ['Pool', 'Spa', 'Restaurant', 'WiFi'],
+    amenities: ['Pool', 'WiFi'],
     featured: true,
+    category: 'Guest Areas',
+    subCategory: 'Standard Rooms',
   },
   {
-    name: 'Mountain View Hotel',
-    description: 'Alpine charm with modern comfort and breathtaking views',
-    location: 'Swiss Alps',
+    name: 'Family room',
+    description: 'Spacious family-friendly accommodations perfect for groups',
+    location: 'Uzi island, zanzibar',
     image_url: 'https://images.pexels.com/photos/1579253/pexels-photo-1579253.jpeg',
     rating: 4.8,
     price_per_night: 380,
     amenities: ['Sauna', 'Restaurant', 'WiFi', 'Parking'],
     featured: true,
+    category: 'Guest Areas',
+    subCategory: 'Family Rooms',
   },
   {
-    name: 'Calm Elegance',
-    description: 'Sophisticated city living in the heart of the capital',
-    location: 'Paris',
+    name: 'Accessible Comfort room',
+    description: 'Fully accessible accommodations with premium amenities',
+    location: 'Uzi island, zanzibar',
     image_url: 'https://images.pexels.com/photos/5531378/pexels-photo-5531378.jpeg',
     rating: 4.7,
     price_per_night: 320,
     amenities: ['Concierge', 'Gym', 'Restaurant', 'WiFi'],
     featured: true,
+    category: 'Guest Areas',
+    subCategory: 'Accessible (disabled-friendly) Rooms',
   },
   {
-    name: 'Tropical Paradise',
+    name: 'Deluxe room',
     description: 'Exotic island retreat with pristine beaches and water sports',
-    location: 'Bali',
+    location: 'Uzi island, zanzibar',
     image_url: 'https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg',
     rating: 4.8,
     price_per_night: 280,
     amenities: ['Beach', 'Water Sports', 'Spa', 'Restaurant'],
     featured: true,
+    category: 'Guest Areas',
+    subCategory: 'Deluxe Rooms',
   },
+
+  // Public Guest Spaces
   {
-    name: 'Historic Grand Hotel',
-    description: 'Colonial elegance with modern conveniences and rich heritage',
-    location: 'Rome',
+    name: 'Grand Reception area',
+    description: 'Elegant reception area with world-class hospitality services',
+    location: 'Uzi island, zanzibar',
     image_url: 'https://images.pexels.com/photos/1612351/pexels-photo-1612351.jpeg',
     rating: 4.6,
     price_per_night: 290,
     amenities: ['Historical Tours', 'Restaurant', 'WiFi', 'Concierge'],
     featured: true,
+    category: 'Public Guest Spaces',
+    subCategory: 'Reception Area',
   },
   {
-    name: 'Nordic Comfort',
-    description: 'Cozy Scandinavian design with authentic Nordic hospitality',
-    location: 'Stockholm',
+    name: 'Business Center area',
+    description: 'Modern business center with all connectivity and workspace amenities',
+    location: 'Uzi island, zanzibar',
     image_url: 'https://images.pexels.com/photos/1624487/pexels-photo-1624487.jpeg',
     rating: 4.7,
     price_per_night: 350,
     amenities: ['Sauna', 'Nordic Spa', 'Restaurant', 'WiFi'],
     featured: true,
+    category: 'Public Guest Spaces',
+    subCategory: 'Business Center',
+  },
+
+  // Food & Beverage Areas
+  {
+    name: 'Breakfast area',
+    description: 'Buffet breakfast with fresh local and international cuisine',
+    location: 'Uzi island, zanzibar',
+    image_url: 'https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg',
+    rating: 4.9,
+    price_per_night: 420,
+    amenities: ['Breakfast Buffet', 'WiFi', 'Pool'],
+    featured: true,
+    category: 'Food & Beverage Areas',
+    subCategory: 'Breakfast Area',
+  },
+  {
+    name: 'Café Coffee Shop',
+    description: 'Cozy café with artisan coffee and pastries throughout the day',
+    location: 'Uzi island, zanzibar',
+    image_url: 'https://images.pexels.com/photos/1579253/pexels-photo-1579253.jpeg',
+    rating: 4.8,
+    price_per_night: 360,
+    amenities: ['Café', 'WiFi', 'Seating Area'],
+    featured: true,
+    category: 'Food & Beverage Areas',
+    subCategory: 'Café / Coffee Shop',
+  },
+
+  // Outdoor & External Areas
+  {
+    name: 'Parking Convenience areas',
+    description: 'Secure parking with easy access to hotel facilities',
+    location: 'Uzi island, zanzibar',
+    image_url: 'https://images.pexels.com/photos/5531378/pexels-photo-5531378.jpeg',
+    rating: 4.7,
+    price_per_night: 310,
+    amenities: ['Parking', 'Security', 'WiFi'],
+    featured: true,
+    category: 'Outdoor & External Areas',
+    subCategory: 'Parking Area',
+  },
+  {
+    name: 'Garden area',
+    description: 'Surrounded by lush tropical gardens and scenic landscaping',
+    location: 'Uzi island, zanzibar',
+    image_url: 'https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg',
+    rating: 4.8,
+    price_per_night: 370,
+    amenities: ['Garden', 'Walking Trails', 'WiFi'],
+    featured: true,
+    category: 'Outdoor & External Areas',
+    subCategory: 'Garden',
+  },
+  {
+    name: 'Outdoor Seating area',
+    description: 'Multiple outdoor seating areas with scenic views and fresh air',
+    location: 'Uzi island, zanzibar',
+    image_url: 'https://images.pexels.com/photos/1612351/pexels-photo-1612351.jpeg',
+    rating: 4.6,
+    price_per_night: 300,
+    amenities: ['Outdoor Seating', 'Bar', 'WiFi'],
+    featured: true,
+    category: 'Outdoor & External Areas',
+    subCategory: 'Outdoor Seating',
   },
 ];
 
+const categories = [
+  'All',
+  'Guest Areas',
+  'Public Guest Spaces',
+  'Food & Beverage Areas',
+  'Outdoor & External Areas',
+];
+
 export default function HotelsPage() {
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  const filteredHotels =
+    activeCategory === 'All'
+      ? mockHotels
+      : mockHotels.filter((hotel) => hotel.category === activeCategory);
+
   return (
     <main className="min-h-screen">
       <Header />
-      
+
       <div className="pt-24 bg-gradient-to-b from-blue-100 to-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-4">
@@ -83,13 +179,41 @@ export default function HotelsPage() {
         </div>
       </div>
 
-      <section className="py-16">
+      {/* Category Filter Buttons */}
+      <section className="py-8 border-b border-gray-200">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {mockHotels.map((hotel) => (
-              <HotelCard key={hotel.name} {...hotel} />
+          <div className="flex flex-wrap gap-4 justify-center">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                variant={activeCategory === category ? 'default' : 'outline'}
+                className={`px-6 py-2 rounded-full font-semibold transition-all ${
+                  activeCategory === category
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'border-blue-600 text-blue-600 hover:bg-blue-50'
+                }`}
+              >
+                {category}
+              </Button>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          {filteredHotels.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {filteredHotels.map((hotel) => (
+                <HotelCard key={hotel.name} {...hotel} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-xl text-gray-600">No hotels found in this category.</p>
+            </div>
+          )}
         </div>
       </section>
 

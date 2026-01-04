@@ -12,9 +12,9 @@ const mockPlaces = [
     name: 'Nungwi',
     description: 'White sandy beaches and crystal-clear waters',
     location: 'Nungwi (North Coast), Zanzibar',
-    image_url: 'https://www.letsgozanzibar.com/wp-content/uploads/2020/12/58ad994dfa81a5c54c778893_The-Z-hotel-Zanzibar-beach-at-Nungwi-1.jpg',
+    image_url: 'https://images.pexels.com/photos/19801671/pexels-photo-19801671.jpeg',
     views: 1500,
-    category: 'Beach & Coastal',
+     category: 'Beach & Coastal',
   },
   
   {
