@@ -6,6 +6,7 @@ import { HeroCarousel } from '@/components/hero-carousel';
 import { HotelCard } from '@/components/hotel-card';
 import { PlaceCard } from '@/components/place-card';
 import { Footer } from '@/components/footer';
+import { WhyChooseUs } from '@/components/why-choose-us';
 import { ArrowRight } from 'lucide-react';
 
 const mockSlides = [
@@ -195,33 +196,43 @@ export default function Home() {
         <HeroCarousel slides={mockSlides} />
       </section>
 
-      <section className="py-20 bg-white">
+      <section className="py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Our Hotel Views</h2>
-            <p className="text-xl text-gray-600">Discover luxury accommodations, views and experiences across the Zanzibar</p>
+          <div className="text-center mb-8 md:mb-4">
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">Our Hotel Views</h2>
+            <p className="sm:text-sm md:text-xl text-gray-600">Discover luxury accommodations, views and experiences across the Zanzibar</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {mockHotels.map((hotel) => (
-              <HotelCard key={hotel.name} {...hotel} />
-            ))}
+          <div className=" overflow-x-auto mx-4 px-4">
+            <div className="flex gap-4 md:gap-6 pb-4 min-w-min">
+              {mockHotels.slice(0, 6).map((hotel) => (
+                <div key={hotel.name} className="flex-shrink-0 w-72 sm:w-80">
+                  <HotelCard {...hotel} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="bg-slate-50">
+      <section className="bg-slate-50 py-16 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Popular Tours</h2>
-            <p className="text-xl text-gray-600">Explore breathtaking destinations around the Zanzibar</p>
+          <div className="text-center mb-8 md:mb-4">
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">Popular Tours</h2>
+            <p className="text-base md:text-xl text-gray-600">Explore breathtaking destinations around the Zanzibar</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {mockTours.map((tour) => (
-              <PlaceCard key={tour.name} {...tour} />
-            ))}
+          <div className="overflow-x-auto -mx-4 px-4">
+            <div className="flex gap-4 md:gap-6 pb-4 min-w-min">
+              {mockTours.slice(0, 6).map((tour) => (
+                <div key={tour.name} className="flex-shrink-0 w-72 sm:w-80">
+                  <PlaceCard {...tour} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
+
+      <WhyChooseUs />
 
       <Footer />
     </main>
