@@ -146,8 +146,8 @@ export default function DestinationsPage() {
       <div className="pt-24 bg-gradient-to-b from-emerald-50 to-white">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h1 className="text-5xl font-bold text-emerald-800 mb-4">Popular Destinations</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <h1 className="text-3xl md:text-5xl font-bold text-emerald-800 mb-4">Popular Destinations</h1>
+            <p className="text-md text-gray-600 max-w-2xl mx-auto">
               Explore breathtaking locations and discover your next adventure
             </p>
           </div>
@@ -155,7 +155,7 @@ export default function DestinationsPage() {
       </div>
 
       {/* Category Filter Buttons */}
-      <section className="py-8 border-b border-gray-200">
+      <section className="hidden md:flex py-8 border-b border-gray-200">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap gap-4 justify-center">
             {categories.map((category) => (
