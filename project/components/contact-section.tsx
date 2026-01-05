@@ -29,47 +29,7 @@ export function ContactSection({ contactInfo }: ContactSectionProps) {
             Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
           </p>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          {[
-            {
-              icon: Phone,
-              title: 'Phone',
-              value: contactInfo.phone,
-              color: 'from-emerald-500 to-teal-500',
-            },
-            {
-              icon: Mail,
-              title: 'Email',
-              value: contactInfo.email,
-              color: 'from-sky-500 to-blue-500',
-            },
-            {
-              icon: MapPin,
-              title: 'Address',
-              value: contactInfo.address,
-              color: 'from-purple-500 to-pink-500',
-            },
-          ].map((item, index) => (
-            <Card
-              key={index}
-              className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300"
-            >
-              <CardContent className="p-8 text-center">
-                <div
-                  className={`w-16 h-16 rounded-full bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-4`}
-                >
-                  <item.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-2">
-                  {item.title}
-                </h3>
-                <p className="text-slate-600">{item.value}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
+        
         <Card className="max-w-4xl mx-auto border-0 shadow-2xl">
           <CardContent className="p-8 md:p-12">
             <form className="space-y-6">
@@ -127,6 +87,48 @@ export function ContactSection({ contactInfo }: ContactSectionProps) {
             </form>
           </CardContent>
         </Card>
+
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
+          {[
+            {
+              icon: Phone,
+              title: 'Phone',
+              value: contactInfo.phone,
+              color: 'from-emerald-500 to-teal-500',
+            },
+            {
+              icon: Mail,
+              title: 'Email',
+              value: contactInfo.email,
+              color: 'from-sky-500 to-blue-500',
+            },
+            {
+              icon: MapPin,
+              title: 'Address',
+              value: contactInfo.address,
+              color: 'from-purple-500 to-pink-500',
+            },
+          ].map((item, index) => (
+            <Card
+              key={index}
+              className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300"
+            >
+              <CardContent className="p-8 text-center">
+                <div
+                  className={`w-16 h-16 rounded-full bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-4`}
+                >
+                  <item.icon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">
+                  {item.title}
+                </h3>
+                <p className="text-slate-600">{item.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
       </div>
     </section>
   );

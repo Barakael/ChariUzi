@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { Menu, X, Hotel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { AuthModal } from '@/components/auth-modal';
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'register' | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,12 +22,16 @@ export function Header() {
 
   const navLinks = [
     { name: 'Home', href: '/' },
-    { name: 'About', href: '/about' },
+    // { name: 'About', href: '/about' },
     { name: 'Hotels', href: '/hotels' },
     { name: 'Tours', href: '/destinations' },
     { name: 'Gallery', href: '/gallery' },
     { name: 'Contact', href: '/contact' },
   ];
+
+  const handleNavClick = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <header
@@ -75,12 +81,14 @@ export function Header() {
 
           <div className="hidden lg:flex items-center gap-4">
             <Button
-              variant="ghost"
-              className={isScrolled ? 'text-slate-700' : 'text-white hover:text-white'}
+              onClick={() => setAuthMode('signin')}
+              className='bg-sky-500 hover:bg-sky-600 text-white font-semibold'
             >
               Sign In
             </Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            <Button 
+              onClick={() => setAuthMode('register')}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
               Book Now
             </Button>
           </div>
@@ -90,41 +98,54 @@ export function Header() {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? (
-              <X className={`w-6 h-6 ${isScrolled ? 'text-slate-700' : 'text-white'}`} />
+              <X className={`w-6 h-6 text-white`} />
             ) : (
-              <Menu className={`w-6 h-6 ${isScrolled ? 'text-slate-700' : 'text-white'}`} />
+              <Menu className={`w-6 h-6 text-slate-700 `} />
             )}
           </button>
         </div>
 
         {isMobileMenuOpen && (
-          <nav className="lg:hidden mt-6 pb-4 space-y-4">
+          <nav className="lg:hidden mt-6 pb-4 space-y-4 bg-white rounded-lg shadow-md p-4">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className={`block font-semibold transition-colors hover:text-emerald-600 ${
-                  isScrolled ? 'text-slate-700' : 'text-white'
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
+                className="block font-semibold transition-colors hover:text-emerald-600 text-slate-700 py-2 px-3 rounded hover:bg-slate-100"
+                onClick={handleNavClick}
               >
                 {link.name}
               </Link>
             ))}
-            <div className="flex flex-col gap-2 pt-4">
+            <div className="flex flex-col gap-2 pt-4 border-t border-slate-200">
               <Button
-                variant="outline"
-                className={isScrolled ? 'text-slate-700 border-slate-300' : 'text-white border-white'}
+                onClick={() => {
+                  setAuthMode('signin');
+                  handleNavClick();
+                }}
+                className='bg-sky-500 hover:bg-sky-600 text-white font-semibold w-full'
               >
                 Sign In
               </Button>
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button 
+                onClick={() => {
+                  setAuthMode('register');
+                  handleNavClick();
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold w-full"
+              >
                 Book Now
               </Button>
             </div>
           </nav>
         )}
       </div>
+
+      <AuthModal 
+        isOpen={!!authMode} 
+        onClose={() => setAuthMode(null)}
+        initialMode={authMode || 'signin'}
+      />
     </header>
   );
 }
