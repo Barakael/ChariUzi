@@ -170,9 +170,9 @@ export default function HotelsPage() {
 
       <div className="pt-24 bg-gradient-to-b from-blue-100 to-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-4">
-            <h1 className="text-5xl font-bold text-blue-900 mb-4">Our Featured Hotels</h1>
-            <p className="text-xl text-[#636B2F] max-w-2xl mx-auto">
+          <div className="text-center">
+            <h1 className="text-3xl md:text-5xl font-bold text-blue-900 ">Our Featured Hotels</h1>
+            <p className="text-md text-emerald-800 max-w-2xl mx-auto">
               Discover luxury accommodations across the world's most beautiful destinations
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function HotelsPage() {
       </div>
 
       {/* Category Filter Buttons */}
-      <section className="py-8 border-b border-gray-200">
+      <section className="hidden md:flex py-8 border-b border-gray-200">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap gap-4 justify-center">
             {categories.map((category) => (
