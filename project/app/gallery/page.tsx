@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
 const galleryImages = [
@@ -10,31 +11,31 @@ const galleryImages = [
     id: 1,
     title: 'Beachfront Resort',
     category: 'Rooms',
-    image: 'https://images.pexels.com/photos/1629317/pexels-photo-1629317.jpeg',
+    image: 'https://images.pexels.com/photos/261204/pexels-photo-261204.jpeg',
   },
   {
     id: 2,
     title: 'Luxury Suite',
     category: 'Rooms',
-    image: 'https://images.pexels.com/photos/1631984/pexels-photo-1631984.jpeg',
+    image: 'https://images.pexels.com/photos/35521638/pexels-photo-35521638.jpeg',
   },
   {
     id: 3,
     title: 'Spa & Wellness',
     category: 'Facilities',
-    image: 'https://images.pexels.com/photos/1624487/pexels-photo-1624487.jpeg',
+    image: 'https://images.pexels.com/photos/3212164/pexels-photo-3212164.jpeg',
   },
   {
     id: 4,
     title: 'Infinity Pool',
     category: 'Facilities',
-    image: 'https://images.pexels.com/photos/1321556/pexels-photo-1321556.jpeg',
+    image: 'https://images.pexels.com/photos/261169/pexels-photo-261169.jpeg',
   },
   {
     id: 5,
     title: 'Fine Dining',
     category: 'Dining',
-    image: 'https://images.pexels.com/photos/1282127/pexels-photo-1282127.jpeg',
+    image: 'https://images.pexels.com/photos/2403391/pexels-photo-2403391.jpeg',
   },
   {
     id: 6,
@@ -52,25 +53,20 @@ const galleryImages = [
     id: 8,
     title: 'Ocean View',
     category: 'Environment',
-    image: 'https://images.pexels.com/photos/1439405/pexels-photo-1439405.jpeg',
+    image: 'https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg',
   },
-  {
-    id: 9,
-    title: 'Garden Landscape',
-    category: 'Environment',
-    image: 'https://images.pexels.com/photos/1230302/pexels-photo-1230302.jpeg',
-  },
+
   {
     id: 10,
     title: 'Conference Hall',
     category: 'Facilities',
-    image: 'https://images.pexels.com/photos/1268915/pexels-photo-1268915.jpeg',
+    image: 'https://images.pexels.com/photos/7648044/pexels-photo-7648044.jpeg',
   },
   {
     id: 11,
     title: 'Beachfront Wedding',
     category: 'Events',
-    image: 'https://images.pexels.com/photos/1205251/pexels-photo-1205251.jpeg',
+    image: 'https://images.pexels.com/photos/169185/pexels-photo-169185.jpeg',
   },
   {
     id: 12,
@@ -95,11 +91,11 @@ export default function GalleryPage() {
     <main className="min-h-screen">
       <Header />
 
-      <div className="pt-24 bg-gradient-to-b from-emerald-50 to-white">
+      <div className="pt-24 bg-gradient-to-b from-blue-100 to-white">
         <div className="container mx-auto px-4">
-          <div className="text-center py-16">
-            <h1 className="text-5xl font-bold text-emerald-800 mb-4">Gallery</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <div className="text-center">
+            <h1 className="text-3xl md:text-5xl font-bold text-emerald-800 mb-4">Our Gallery of Moments</h1>
+            <p className="text-md text-blue-800 max-w-2xl mx-auto">
               Discover the beauty of our hotel and resort facilities
             </p>
           </div>
@@ -107,21 +103,22 @@ export default function GalleryPage() {
       </div>
 
       {/* Category Filter */}
-      <section className="py-8 border-b border-gray-200">
+      <section className="hidden md:flex py-8 border-b border-gray-200">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap gap-4 justify-center">
             {categories.map((category) => (
-              <button
+              <Button
                 key={category}
                 onClick={() => setActiveCategory(category)}
+                variant={activeCategory === category ? 'default' : 'outline'}
                 className={`px-6 py-2 rounded-full font-semibold transition-all ${
                   activeCategory === category
-                    ? 'bg-emerald-600 text-white'
-                    : 'border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50'
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    : 'border-emerald-600 text-emerald-600 hover:bg-emerald-50'
                 }`}
               >
                 {category}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -130,7 +127,7 @@ export default function GalleryPage() {
       {/* Gallery Grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredImages.map((image) => (
               <div
                 key={image.id}
