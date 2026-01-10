@@ -1,36 +1,51 @@
 'use client';
 
-import { MapPin, Star } from 'lucide-react';
+import Link from 'next/link';
+import { MapPin, Star, Check, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 interface HotelCardProps {
+  id?: string;
   name: string;
   description: string;
   location: string;
-  image_url: string;
+  image_url?: string;
+  imageUrl?: string;
   rating: number;
-  price_per_night: number;
+  price_per_night?: number;
+  pricePerNight?: number;
   amenities: string[];
   featured: boolean;
+  available?: boolean;
+  onBook?: (roomId: string) => void;
 }
 
 export function HotelCard({
+  id,
   name,
   description,
   location,
   image_url,
+  imageUrl,
   rating,
   price_per_night,
+  pricePerNight,
   amenities,
   featured,
+  available = true,
+  onBook,
 }: HotelCardProps) {
+  const resolvedImage = imageUrl || image_url;
+  const nightly = typeof pricePerNight === 'number' ? pricePerNight : price_per_night;
+  const roomId = id || name;
+
   return (
     <Card className="group overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 h-full">
       <div className="relative h-64 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-          style={{ backgroundImage: `url(${image_url})` }}
+          style={{ backgroundImage: `url(${resolvedImage})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         {featured && (
@@ -38,6 +53,21 @@ export function HotelCard({
             Featured
           </Badge>
         )}
+        <div className="absolute top-4 left-4">
+          <Badge
+            variant="secondary"
+            className={
+              available
+                ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                : 'bg-amber-100 text-amber-700 border-amber-200'
+            }
+          >
+            <span className="flex items-center gap-1 text-xs font-semibold">
+              {available ? <Check className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+              {available ? 'Available' : 'Unavailable'}
+            </span>
+          </Badge>
+        </div>
         <div className="absolute bottom-4 left-4 right-4">
           <div className="flex items-center gap-1 text-yellow-400 mb-2">
             <Star className="w-5 h-5 fill-current" />
@@ -79,13 +109,25 @@ export function HotelCard({
           <div>
             <p className="text-sm text-sky-500">Starting from</p>
             <p className="text-2xl font-bold text-sky-600">
-              ${price_per_night}
+              ${nightly ?? 0}
               <span className="text-sm font-normal text-slate-500">/night</span>
             </p>
           </div>
-          <button className="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-semibold transition-colors">
-            Book Now
-          </button>
+          {onBook ? (
+            <button
+              onClick={() => onBook(roomId)}
+              className="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-semibold transition-colors"
+            >
+              Book Now
+            </button>
+          ) : (
+            <Link
+              href="/hotels"
+              className="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-semibold transition-colors"
+            >
+              Book Now
+            </Link>
+          )}
         </div>
       </CardContent>
     </Card>
