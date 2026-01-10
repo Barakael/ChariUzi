@@ -5,11 +5,13 @@ import { Menu, X, Hotel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { AuthModal } from '@/components/auth-modal';
+import { useBooking } from '@/lib/booking-context';
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'register' | null>(null);
+  const { user, signOut } = useBooking();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,10 +26,15 @@ export function Header() {
     { name: 'Home', href: '/' },
     // { name: 'About', href: '/about' },
     { name: 'Hotels', href: '/hotels' },
+    { name: 'Reservations', href: '/reservations' },
     { name: 'Tours', href: '/destinations' },
     { name: 'Gallery', href: '/gallery' },
     { name: 'Contact', href: '/contact' },
   ];
+
+  const visibleNavLinks = user?.role === 'admin' 
+    ? [...navLinks, { name: 'Admin', href: '/admin' }]
+    : navLinks;
 
   const handleNavClick = () => {
     setIsMobileMenuOpen(false);
@@ -66,7 +73,7 @@ export function Header() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
+            {visibleNavLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
@@ -80,17 +87,37 @@ export function Header() {
           </nav>
 
           <div className="hidden lg:flex items-center gap-4">
-            <Button
-              onClick={() => setAuthMode('signin')}
-              className='bg-sky-500 hover:bg-sky-600 text-white font-semibold'
-            >
-              Sign In
-            </Button>
-            <Button 
-              onClick={() => setAuthMode('register')}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
-              Book Now
-            </Button>
+            {user ? (
+              <>
+                <span className="text-sm text-slate-700">Hi, {user.name}</span>
+                <Button asChild variant="outline" className="font-semibold">
+                  <Link href={user.role === 'admin' ? '/admin' : '/hotels'}>
+                    {user.role === 'admin' ? 'Dashboard' : 'My bookings'}
+                  </Link>
+                </Button>
+                <Button
+                  onClick={signOut}
+                  variant="ghost"
+                  className="text-slate-700 hover:text-slate-900"
+                >
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  onClick={() => setAuthMode('signin')}
+                  className='bg-sky-500 hover:bg-sky-600 text-white font-semibold'
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  onClick={() => setAuthMode('register')}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+                  Book Now
+                </Button>
+              </>
+            )}
           </div>
 
           <button
@@ -107,7 +134,7 @@ export function Header() {
 
         {isMobileMenuOpen && (
           <nav className="lg:hidden mt-6 pb-4 space-y-4 bg-white rounded-lg shadow-md p-4">
-            {navLinks.map((link) => (
+            {visibleNavLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
@@ -118,24 +145,47 @@ export function Header() {
               </Link>
             ))}
             <div className="flex flex-col gap-2 pt-4 border-t border-slate-200">
-              <Button
-                onClick={() => {
-                  setAuthMode('signin');
-                  handleNavClick();
-                }}
-                className='bg-sky-500 hover:bg-sky-600 text-white font-semibold w-full'
-              >
-                Sign In
-              </Button>
-              <Button 
-                onClick={() => {
-                  setAuthMode('register');
-                  handleNavClick();
-                }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold w-full"
-              >
-                Book Now
-              </Button>
+              {user ? (
+                <>
+                  <div className="text-sm text-slate-700">Signed in as {user.name}</div>
+                  <Button asChild className="w-full">
+                    <Link href={user.role === 'admin' ? '/admin' : '/hotels'} onClick={handleNavClick}>
+                      {user.role === 'admin' ? 'Dashboard' : 'My bookings'}
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      signOut();
+                      handleNavClick();
+                    }}
+                    className="w-full"
+                  >
+                    Sign out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => {
+                      setAuthMode('signin');
+                      handleNavClick();
+                    }}
+                    className='bg-sky-500 hover:bg-sky-600 text-white font-semibold w-full'
+                  >
+                    Sign In
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setAuthMode('register');
+                      handleNavClick();
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold w-full"
+                  >
+                    Book Now
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         )}
