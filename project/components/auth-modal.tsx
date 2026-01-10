@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Mail, Lock, User, Phone, Calendar } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, Mail, Lock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useBooking } from '@/lib/booking-context';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -20,6 +21,15 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
     dateOfBirth: '',
     confirmPassword: '',
   });
+  const [error, setError] = useState<string | null>(null);
+  const { signIn } = useBooking();
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setError(null);
+    }
+  }, [initialMode, isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -28,8 +38,16 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
+    setError(null);
+
+    if (mode === 'register' && formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    const name = formData.name || formData.email.split('@')[0] || 'Guest';
+
+    signIn({ email: formData.email, name });
     onClose();
   };
 
@@ -63,6 +81,32 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-8">
+
+          {error && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {mode === 'register' && (
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 w-5 h-5 text-emerald-500" />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Jane Doe"
+                  className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition-colors"
+                  required
+                />
+              </div>
+            </div>
+          )}
           
 
           <div className="mb-4">
@@ -165,6 +209,10 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
           >
             Continue with Google
           </button>
+
+          <p className="text-xs text-center text-gray-500 mb-4">
+            Tip: sign in with an email that contains "admin" to unlock the admin dashboard.
+          </p>
 
           <p className="text-center text-gray-600">
             {mode === 'signin' ? (
