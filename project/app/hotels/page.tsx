@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -18,15 +18,55 @@ export default function HotelsPage() {
     to: new Date(Date.now() + 1000 * 60 * 60 * 24),
   });
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [availabilityMap, setAvailabilityMap] = useState<Record<string, boolean>>({});
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
 
   const categories = useMemo(() => {
     const unique = Array.from(new Set(rooms.map((room) => room.category).filter(Boolean)));
     return ['All', ...unique];
   }, [rooms]);
 
-  const filteredRooms = rooms.filter((room) =>
-    activeCategory === 'All' ? true : room.category === activeCategory
+  const filteredRooms = useMemo(
+    () =>
+      rooms.filter((room) =>
+        activeCategory === 'All' ? true : room.category === activeCategory
+      ),
+    [rooms, activeCategory]
   );
+
+  useEffect(() => {
+    let active = true;
+    if (!dateRange?.from || !dateRange?.to || filteredRooms.length === 0) {
+      setAvailabilityMap({});
+      return;
+    }
+
+    const run = async () => {
+      setIsCheckingAvailability(true);
+      try {
+        const entries = await Promise.all(
+          filteredRooms.map(async (room) => {
+            const available = await isRoomAvailable(room.id, dateRange.from!, dateRange.to!);
+            return [room.id, available] as const;
+          })
+        );
+        if (!active) return;
+        setAvailabilityMap(Object.fromEntries(entries));
+      } catch (error) {
+        if (!active) return;
+        console.error('Failed to check availability', error);
+        setAvailabilityMap({});
+      } finally {
+        if (active) setIsCheckingAvailability(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      active = false;
+    };
+  }, [filteredRooms, dateRange?.from, dateRange?.to, isRoomAvailable]);
 
   const handleBook = (roomId: string) => {
     setSelectedRoomId(roomId);
@@ -82,29 +122,34 @@ export default function HotelsPage() {
       <section className="py-16">
         <div className="container mx-auto px-4">
           {filteredRooms.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredRooms.map((room) => {
-                const available = dateRange?.from && dateRange?.to
-                  ? isRoomAvailable(room.id, dateRange.from, dateRange.to)
-                  : true;
-                return (
-                  <HotelCard
-                    key={room.id}
-                    id={room.id}
-                    name={room.name}
-                    description={room.description}
-                    location={room.location}
-                    imageUrl={room.imageUrl}
-                    rating={room.rating}
-                    pricePerNight={room.pricePerNight}
-                    amenities={room.amenities}
-                    featured={!!room.featured}
-                    available={available}
-                    onBook={handleBook}
-                  />
-                );
-              })}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {filteredRooms.map((room) => {
+                  const available = dateRange?.from && dateRange?.to
+                    ? availabilityMap[room.id] ?? true
+                    : true;
+                  return (
+                    <HotelCard
+                      key={room.id}
+                      id={room.id}
+                      name={room.name}
+                      description={room.description}
+                      location={room.location}
+                      imageUrl={room.imageUrl}
+                      rating={room.rating}
+                      pricePerNight={room.pricePerNight}
+                      amenities={room.amenities}
+                      featured={!!room.featured}
+                      available={available}
+                      onBook={handleBook}
+                    />
+                  );
+                })}
+              </div>
+              {isCheckingAvailability && (
+                <p className="text-center text-sm text-slate-500 mt-4">Refreshing availability…</p>
+              )}
+            </>
           ) : (
             <div className="text-center py-12">
               <p className="text-xl text-gray-600">No rooms found in this category.</p>
