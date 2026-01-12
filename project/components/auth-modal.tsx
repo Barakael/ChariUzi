@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Mail, Lock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBooking } from '@/lib/booking-context';
@@ -22,7 +23,13 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
     confirmPassword: '',
   });
   const [error, setError] = useState<string | null>(null);
-  const { signIn } = useBooking();
+  const [mounted, setMounted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const { signIn, register } = useBooking();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,7 +43,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -46,16 +53,34 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
     }
 
     const name = formData.name || formData.email.split('@')[0] || 'Guest';
+    setSubmitting(true);
 
-    signIn({ email: formData.email, name });
+    const result =
+      mode === 'signin'
+        ? await signIn({ email: formData.email, password: formData.password })
+        : await register({ name, email: formData.email, password: formData.password });
+
+    if (!result.success) {
+      setError(result.message || (mode === 'signin' ? 'Login failed.' : 'Registration failed.'));
+      setSubmitting(false);
+      return;
+    }
+
+    setSubmitting(false);
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        onClick={(event) => event.stopPropagation()}
+      >
         {/* Header */}
         <div className={`relative p-8 text-white rounded-t-2xl ${
           mode === 'signin' 
@@ -185,13 +210,20 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
 
           <button
             type="submit"
+            disabled={submitting}
             className={`w-full py-2 rounded-lg font-bold text-white transition-all mb-4 ${
               mode === 'signin'
                 ? 'bg-gradient-to-r from-sky-500 to-sky-600 hover:shadow-lg hover:shadow-sky-200'
                 : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-200'
-            }`}
+            } ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            {mode === 'signin' ? 'Sign In' : 'Create Account'}
+            {submitting
+              ? mode === 'signin'
+                ? 'Signing in...'
+                : 'Creating account...'
+              : mode === 'signin'
+              ? 'Sign In'
+              : 'Create Account'}
           </button>
 
           <div className="relative mb-4">
@@ -248,6 +280,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
