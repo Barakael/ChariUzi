@@ -14,7 +14,7 @@ export default function ReservationsPage() {
   const [authOpen, setAuthOpen] = useState(false);
 
   const list = user
-    ? reservations.filter((r) => r.userId === user.id || r.user_id === user.id)
+    ? reservations.filter((r) => r.userId === String(user.id) || r.user_id === Number(user.id))
     : [];
 
   return (
