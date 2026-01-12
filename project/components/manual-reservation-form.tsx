@@ -138,7 +138,7 @@ export function ManualReservationForm() {
             <SelectContent>
               {rooms.map((room) => (
                 <SelectItem key={room.id} value={room.id}>
-                  {room.name} - ${room.pricePerNight}/night
+                  {room.name} - ${room.pricePerNight || room.price_per_night}/night
                 </SelectItem>
               ))}
             </SelectContent>
