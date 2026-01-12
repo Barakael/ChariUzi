@@ -1,6 +1,21 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  apiClient,
+  type DashboardStats,
+  type Reservation as ApiReservation,
+  type Room as ApiRoom,
+  type Service,
+  type User,
+} from "@/lib/api-client";
 
 export type ServiceOption =
   | "wifi"
@@ -18,317 +33,350 @@ export type ReservationStatus =
   | "confirmed"
   | "cancelled";
 
-export interface BookingUser {
-  id: string;
-  name: string;
-  email: string;
-  role: "customer" | "admin";
-}
+export interface BookingUser extends User {}
 
 export interface Room {
   id: string;
+  numericId: number;
   name: string;
   description: string;
-  location: string;
+  location?: string | null;
   imageUrl: string;
-  rating: number;
+  image_url: string;
   pricePerNight: number;
+  price_per_night: number;
+  rating?: number;
+  capacity?: number;
+  featured?: boolean;
+  category?: string | null;
+  subCategory?: string | null;
+  sub_category?: string | null;
   amenities: string[];
   services: ServiceOption[];
-  featured?: boolean;
-  category?: string;
-  subCategory?: string;
-  capacity?: number;
+  raw: ApiRoom;
 }
 
 export interface Reservation {
   id: string;
+  numericId: number;
   roomId: string;
+  room_id: number;
   userId: string;
+  user_id: number;
   userName: string;
   userEmail: string;
   startDate: string;
+  start_date: string;
   endDate: string;
+  end_date: string;
   nights: number;
   status: ReservationStatus;
   totalPrice: number;
-  paymentMethod?: string;
+  total_price: number;
+  paymentMethod?: string | null;
   createdAt: string;
+  created_at: string;
+  room?: Room;
+  raw: ApiReservation;
 }
 
 interface BookingContextValue {
-  user?: BookingUser | null;
+  user: BookingUser | null;
+  loading: boolean;
   rooms: Room[];
   reservations: Reservation[];
-  signIn: (payload: { email: string; name: string }) => void;
-  signOut: () => void;
-  addRoom: (input: Omit<Room, "id" | "rating"> & { rating?: number }) => Room;
+  services: Service[];
+  stats: DashboardStats | null;
+  signIn: (payload: { email: string; password: string }) => Promise<{ success: boolean; message?: string }>;
+  register: (payload: { name: string; email: string; password: string }) => Promise<{ success: boolean; message?: string }>;
+  signOut: () => Promise<void>;
+  fetchRooms: (filters?: {
+    category?: string;
+    featured?: boolean;
+    start_date?: string;
+    end_date?: string;
+  }) => Promise<void>;
+  addRoom: (input: {
+    name: string;
+    description: string;
+    location?: string;
+    imageUrl: string;
+    pricePerNight: number;
+    rating?: number;
+    capacity?: number;
+    featured?: boolean;
+    category?: string;
+    subCategory?: string;
+    services?: ServiceOption[];
+  }) => Promise<{ success: boolean; message?: string }>;
   createReservation: (input: {
     roomId: string;
     startDate: Date;
     endDate: Date;
     paymentMethod?: string;
-  }) => { success: boolean; message?: string; reservation?: Reservation };
-  markReservationPaid: (id: string) => void;
-  isRoomAvailable: (roomId: string, start: Date, end: Date) => boolean;
-  stats: {
-    totalReservations: number;
-    activeReservations: number;
-    paidReservations: number;
-    rooms: number;
-    revenue: number;
-  };
+  }) => Promise<{ success: boolean; message?: string; reservation?: Reservation }>;
+  markReservationPaid: (id: string) => Promise<void>;
+  cancelReservation: (id: string) => Promise<void>;
+  isRoomAvailable: (roomId: string, start: Date, end: Date) => Promise<boolean>;
 }
 
 const BookingContext = createContext<BookingContextValue | undefined>(undefined);
 
-const dayMs = 1000 * 60 * 60 * 24;
-
-function nightsBetween(start: Date, end: Date) {
-  const startUtc = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
-  const endUtc = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
-  const diff = Math.max(1, Math.round((endUtc - startUtc) / dayMs));
-  return diff;
-}
-
-function rangesOverlap(startA: Date, endA: Date, startB: Date, endB: Date) {
-  return startA <= endB && startB <= endA;
-}
-
-const initialRooms: Room[] = [
-  {
-    id: "room-standard-1",
-    name: "Standard Room",
-    description: "Cozy room with sea breeze, perfect for solo travelers or couples.",
-    location: "Uzi Island, Zanzibar",
-    imageUrl: "https://images.pexels.com/photos/35526989/pexels-photo-35526989.jpeg",
-    rating: 4.9,
-    pricePerNight: 300,
-    amenities: ["Single bed", "Flat screen TV", "Air conditioning"],
-    services: ["wifi", "breakfast", "air-conditioning"],
-    featured: true,
-    category: "Guest Areas",
-    subCategory: "Standard Rooms",
-    capacity: 2,
-  },
-  {
-    id: "room-family-1",
-    name: "Family Room",
-    description: "Spacious family-friendly room with two beds and kid-friendly touches.",
-    location: "Uzi Island, Zanzibar",
-    imageUrl: "https://images.pexels.com/photos/7546767/pexels-photo-7546767.jpeg",
-    rating: 4.8,
-    pricePerNight: 580,
-    amenities: ["Two beds", "Flat screen TV", "Air conditioning"],
-    services: ["wifi", "breakfast", "parking"],
-    featured: true,
-    category: "Guest Areas",
-    subCategory: "Family Rooms",
-    capacity: 4,
-  },
-  {
-    id: "room-vip-1",
-    name: "VIP Room",
-    description: "Premium suite with lounge area, curated minibar, and concierge perks.",
-    location: "Uzi Island, Zanzibar",
-    imageUrl: "https://images.pexels.com/photos/35526997/pexels-photo-35526997.jpeg",
-    rating: 4.9,
-    pricePerNight: 390,
-    amenities: ["King bed", "Flat screen TV", "Air conditioning"],
-    services: ["wifi", "breakfast", "workspace", "laundry"],
-    featured: true,
-    category: "Guest Areas",
-    subCategory: "Suites",
-    capacity: 2,
-  },
-  {
-    id: "room-vvip-1",
-    name: "VVIP Room",
-    description: "Ocean-view suite with private deck, tailored experiences, and butler call.",
-    location: "Uzi Island, Zanzibar",
-    imageUrl: "https://images.pexels.com/photos/14513797/pexels-photo-14513797.jpeg",
-    rating: 4.9,
-    pricePerNight: 480,
-    amenities: ["King bed", "Flat screen TV", "Sound system"],
-    services: ["wifi", "breakfast", "pool", "workspace"],
-    featured: true,
-    category: "Guest Areas",
-    subCategory: "Signature Suites",
-    capacity: 2,
-  },
-  {
-    id: "room-garden-1",
-    name: "Garden Area",
-    description: "Lush garden surroundings with outdoor seating and sunrise walks.",
-    location: "Uzi Island, Zanzibar",
-    imageUrl: "https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg",
-    rating: 4.6,
-    pricePerNight: 310,
-    amenities: ["Outdoor seating", "Walking trails"],
-    services: ["wifi", "parking"],
-    featured: false,
-    category: "Outdoor & External Areas",
-    subCategory: "Garden",
-    capacity: 4,
-  },
-  {
-    id: "room-breakfast-1",
-    name: "Breakfast Lounge",
-    description: "Buffet breakfast with local and international favorites daily.",
-    location: "Uzi Island, Zanzibar",
-    imageUrl: "https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg",
-    rating: 4.7,
-    pricePerNight: 260,
-    amenities: ["Buffet", "Coffee bar"],
-    services: ["wifi", "breakfast"],
-    featured: false,
-    category: "Food & Beverage Areas",
-    subCategory: "Breakfast",
-    capacity: 20,
-  },
-];
-
-const seedReservations: Reservation[] = [
-  {
-    id: "res-1",
-    roomId: "room-standard-1",
-    userId: "demo-user",
-    userName: "Demo Guest",
-    userEmail: "guest@example.com",
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + dayMs * 2).toISOString(),
-    nights: 2,
-    status: "paid",
-    totalPrice: 600,
-    paymentMethod: "card",
-    createdAt: new Date().toISOString(),
-  },
-];
-
 export function BookingProvider({ children }: { children: React.ReactNode }) {
-  const [rooms, setRooms] = useState<Room[]>(initialRooms);
-  const [reservations, setReservations] = useState<Reservation[]>(seedReservations);
   const [user, setUser] = useState<BookingUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
-  const signIn = ({ email, name }: { email: string; name: string }) => {
-    const role = email.toLowerCase().includes("admin") ? "admin" : "customer";
-    const payload: BookingUser = {
-      id: email,
-      name: name || email.split("@")[0] || "Guest",
-      email,
-      role,
-    };
-    setUser(payload);
-  };
+  const serviceKeyToId = useMemo(() => {
+    return new Map(services.map((service) => [service.key, service.id]));
+  }, [services]);
 
-  const signOut = () => setUser(null);
-
-  const isRoomAvailable = (roomId: string, start: Date, end: Date) => {
-    const targetStart = new Date(start);
-    const targetEnd = new Date(end);
-    if (targetEnd < targetStart) return false;
-
-    const overlapping = reservations.some((reservation) => {
-      if (reservation.roomId !== roomId) return false;
-      if (reservation.status === "cancelled") return false;
-      const resStart = new Date(reservation.startDate);
-      const resEnd = new Date(reservation.endDate);
-      return rangesOverlap(resStart, resEnd, targetStart, targetEnd);
-    });
-
-    return !overlapping;
-  };
-
-  const createReservation: BookingContextValue["createReservation"] = ({
-    roomId,
-    startDate,
-    endDate,
-    paymentMethod,
-  }) => {
-    const room = rooms.find((r) => r.id === roomId);
-    if (!room) return { success: false, message: "Room not found" };
-    if (!user) return { success: false, message: "Please sign in to reserve." };
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return { success: false, message: "Select valid dates." };
+  const restoreSession = useCallback(async () => {
+    if (!apiClient.getToken()) return;
+    try {
+      const { user: userData } = await apiClient.me();
+      setUser(userData);
+    } catch (error) {
+      console.error("Failed to restore auth session", error);
+      apiClient.setToken(null);
+      setUser(null);
     }
-    if (end < start) return { success: false, message: "End date must be after start date." };
+  }, []);
 
-    const available = isRoomAvailable(roomId, start, end);
-    if (!available) {
-      return { success: false, message: "Room is not available for those dates." };
+  const fetchRooms = useCallback(
+    async (filters?: {
+      category?: string;
+      featured?: boolean;
+      start_date?: string;
+      end_date?: string;
+    }) => {
+      try {
+        const { rooms: roomData } = await apiClient.getRooms(filters);
+        setRooms(roomData.map(normalizeRoom));
+      } catch (error) {
+        console.error("Failed to fetch rooms", error);
+      }
+    },
+    []
+  );
+
+  const fetchServices = useCallback(async () => {
+    try {
+      const { services: serviceData } = await apiClient.getServices();
+      setServices(serviceData);
+    } catch (error) {
+      console.error("Failed to fetch services", error);
     }
+  }, []);
 
-    const nights = nightsBetween(start, end);
-    const reservation: Reservation = {
-      id: `res-${crypto.randomUUID()}`,
-      roomId,
-      userId: user.id,
-      userName: user.name,
-      userEmail: user.email,
-      startDate: start.toISOString(),
-      endDate: end.toISOString(),
-      nights,
-      status: "pending-payment",
-      totalPrice: nights * room.pricePerNight,
-      paymentMethod,
-      createdAt: new Date().toISOString(),
+  const fetchReservations = useCallback(async () => {
+    if (!apiClient.getToken()) return;
+    try {
+      const { reservations: reservationData } = await apiClient.getReservations();
+      setReservations(reservationData.map(normalizeReservation));
+    } catch (error) {
+      console.error("Failed to fetch reservations", error);
+    }
+  }, []);
+
+  const fetchStats = useCallback(async () => {
+    if (!apiClient.getToken()) return;
+    try {
+      const { stats: statsData } = await apiClient.getDashboardStats();
+      setStats(statsData);
+    } catch (error) {
+      console.error("Failed to fetch stats", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    const bootstrap = async () => {
+      setLoading(true);
+      await Promise.all([restoreSession(), fetchRooms(), fetchServices()]);
+      setLoading(false);
     };
+    bootstrap();
+  }, [restoreSession, fetchRooms, fetchServices]);
 
-    setReservations((prev) => [...prev, reservation]);
-    return { success: true, reservation, message: "Reservation created. Complete payment to confirm." };
-  };
+  useEffect(() => {
+    if (!user) {
+      setReservations([]);
+      setStats(null);
+      return;
+    }
+    fetchReservations();
+    if (user.role === "admin") {
+      fetchStats();
+    }
+  }, [user, fetchReservations, fetchStats]);
 
-  const addRoom: BookingContextValue["addRoom"] = (input) => {
-    const newRoom: Room = {
-      id: `room-${crypto.randomUUID()}`,
-      rating: input.rating ?? 4.8,
-      ...input,
-    };
-    setRooms((prev) => [newRoom, ...prev]);
-    return newRoom;
-  };
+  const signIn = useCallback(
+    async ({ email, password }: { email: string; password: string }) => {
+      try {
+        const { user: userData } = await apiClient.login({ email, password });
+        setUser(userData);
+        await Promise.all([fetchReservations(), userData.role === "admin" ? fetchStats() : Promise.resolve()]);
+        return { success: true };
+      } catch (error: any) {
+        return { success: false, message: error.message || "Login failed" };
+      }
+    },
+    [fetchReservations, fetchStats]
+  );
 
-  const markReservationPaid = (id: string) => {
-    setReservations((prev) =>
-      prev.map((reservation) =>
-        reservation.id === id
-          ? { ...reservation, status: "paid" as ReservationStatus }
-          : reservation
-      )
-    );
-  };
+  const register = useCallback(
+    async ({ name, email, password }: { name: string; email: string; password: string }) => {
+      try {
+        const { user: userData } = await apiClient.register({ name, email, password });
+        setUser(userData);
+        return { success: true };
+      } catch (error: any) {
+        return { success: false, message: error.message || "Registration failed" };
+      }
+    },
+    []
+  );
 
-  const stats = useMemo(() => {
-    const totalReservations = reservations.length;
-    const paidReservations = reservations.filter((r) => r.status === "paid").length;
-    const activeReservations = reservations.filter((r) => r.status !== "cancelled").length;
-    const revenue = reservations
-      .filter((r) => r.status === "paid" || r.status === "confirmed")
-      .reduce((acc, curr) => acc + curr.totalPrice, 0);
+  const signOut = useCallback(async () => {
+    try {
+      if (apiClient.getToken()) {
+        await apiClient.logout();
+      }
+    } catch (error) {
+      console.error("Error during logout", error);
+    } finally {
+      apiClient.setToken(null);
+      setUser(null);
+      setReservations([]);
+      setStats(null);
+    }
+  }, []);
 
-    return {
-      totalReservations,
-      activeReservations,
-      paidReservations,
-      rooms: rooms.length,
-      revenue,
-    };
-  }, [reservations, rooms.length]);
+  const addRoom: BookingContextValue["addRoom"] = useCallback(
+    async (input) => {
+      if (!user || user.role !== "admin") {
+        return { success: false, message: "Only admins can add rooms." };
+      }
+
+      try {
+        const serviceIds = (input.services || [])
+          .map((key) => serviceKeyToId.get(key))
+          .filter((id): id is number => typeof id === "number");
+
+        const { room, message } = await apiClient.createRoom({
+          name: input.name,
+          description: input.description,
+          location: input.location,
+          image_url: input.imageUrl,
+          price_per_night: input.pricePerNight,
+          rating: input.rating,
+          capacity: input.capacity,
+          featured: input.featured,
+          category: input.category,
+          sub_category: input.subCategory,
+          services: serviceIds,
+        });
+
+        setRooms((prev) => [normalizeRoom(room), ...prev]);
+        return { success: true, message };
+      } catch (error: any) {
+        return { success: false, message: error.message || "Failed to create room" };
+      }
+    },
+    [serviceKeyToId, user]
+  );
+
+  const createReservation: BookingContextValue["createReservation"] = useCallback(
+    async ({ roomId, startDate, endDate, paymentMethod }) => {
+      if (!user) {
+        return { success: false, message: "Please sign in to reserve." };
+      }
+
+      const targetRoom = rooms.find((room) => room.id === roomId || String(room.numericId) === roomId);
+      const numericRoomId = targetRoom?.numericId ?? Number(roomId);
+      if (!numericRoomId) {
+        return { success: false, message: "Room not found." };
+      }
+
+      try {
+        const { reservation, message } = await apiClient.createReservation({
+          room_id: numericRoomId,
+          start_date: formatDate(startDate),
+          end_date: formatDate(endDate),
+          payment_method: paymentMethod,
+        });
+        const normalized = normalizeReservation(reservation);
+        setReservations((prev) => [normalized, ...prev]);
+        return { success: true, message, reservation: normalized };
+      } catch (error: any) {
+        return { success: false, message: error.message || "Failed to create reservation" };
+      }
+    },
+    [rooms, user]
+  );
+
+  const markReservationPaid = useCallback(
+    async (id: string) => {
+      const numericId = Number(id);
+      if (!numericId) return;
+      try {
+        const { reservation } = await apiClient.updateReservationStatus(numericId, "paid");
+        const normalized = normalizeReservation(reservation);
+        setReservations((prev) => prev.map((res) => (res.numericId === numericId ? normalized : res)));
+      } catch (error) {
+        console.error("Failed to update reservation status", error);
+      }
+    },
+    []
+  );
+
+  const cancelReservation = useCallback(async (id: string) => {
+    const numericId = Number(id);
+    if (!numericId) return;
+    try {
+      await apiClient.cancelReservation(numericId);
+      setReservations((prev) => prev.map((res) => (res.numericId === numericId ? { ...res, status: "cancelled" } : res)));
+    } catch (error) {
+      console.error("Failed to cancel reservation", error);
+    }
+  }, []);
+
+  const isRoomAvailable = useCallback(async (roomId: string, start: Date, end: Date) => {
+    const targetRoom = rooms.find((room) => room.id === roomId || String(room.numericId) === roomId);
+    const numericRoomId = targetRoom?.numericId ?? Number(roomId);
+    if (!numericRoomId) return false;
+
+    try {
+      const { available } = await apiClient.checkAvailability(numericRoomId, {
+        start_date: formatDate(start),
+        end_date: formatDate(end),
+      });
+      return available;
+    } catch (error) {
+      console.error("Failed to check availability", error);
+      return false;
+    }
+  }, [rooms]);
 
   const value: BookingContextValue = {
     user,
+    loading,
     rooms,
     reservations,
+    services,
+    stats,
     signIn,
+    register,
     signOut,
+    fetchRooms,
     addRoom,
     createReservation,
     markReservationPaid,
+    cancelReservation,
     isRoomAvailable,
-    stats,
   };
 
   return <BookingContext.Provider value={value}>{children}</BookingContext.Provider>;
@@ -338,4 +386,60 @@ export function useBooking() {
   const ctx = useContext(BookingContext);
   if (!ctx) throw new Error("useBooking must be used within BookingProvider");
   return ctx;
+}
+
+function normalizeRoom(room: ApiRoom): Room {
+  return {
+    id: String(room.id),
+    numericId: room.id,
+    name: room.name,
+    description: room.description,
+    location: room.location,
+    imageUrl: room.image_url,
+    image_url: room.image_url,
+    pricePerNight: Number(room.price_per_night),
+    price_per_night: Number(room.price_per_night),
+    rating: room.rating ? Number(room.rating) : undefined,
+    capacity: room.capacity ?? undefined,
+    featured: room.featured ?? false,
+    category: room.category,
+    subCategory: room.sub_category,
+    sub_category: room.sub_category,
+    amenities: room.services?.map((service) => service.name) ?? [],
+    services: room.services?.map((service) => service.key as ServiceOption) ?? [],
+    raw: room,
+  };
+}
+
+function normalizeReservation(reservation: ApiReservation): Reservation {
+  return {
+    id: String(reservation.id),
+    numericId: reservation.id,
+    roomId: String(reservation.room_id),
+    room_id: reservation.room_id,
+    userId: String(reservation.user_id),
+    user_id: reservation.user_id,
+    userName: reservation.user?.name || "Guest",
+    userEmail: reservation.user?.email || "",
+    startDate: reservation.start_date,
+    start_date: reservation.start_date,
+    endDate: reservation.end_date,
+    end_date: reservation.end_date,
+    nights: reservation.nights,
+    status: reservation.status,
+    totalPrice: Number(reservation.total_price),
+    total_price: Number(reservation.total_price),
+    paymentMethod: reservation.payment_method,
+    createdAt: reservation.created_at,
+    created_at: reservation.created_at,
+    room: reservation.room ? normalizeRoom(reservation.room) : undefined,
+    raw: reservation,
+  };
+}
+
+function formatDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
