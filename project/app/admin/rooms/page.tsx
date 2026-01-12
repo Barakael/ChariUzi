@@ -12,7 +12,7 @@ import { useBooking, ServiceOption } from "@/lib/booking-context";
 import { Plus } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 
-const serviceOptions: { key: ServiceOption; label: string }[] = [
+const defaultServiceOptions: { key: ServiceOption; label: string }[] = [
   { key: "wifi", label: "WiFi" },
   { key: "breakfast", label: "Breakfast" },
   { key: "parking", label: "Parking" },
@@ -24,9 +24,12 @@ const serviceOptions: { key: ServiceOption; label: string }[] = [
 ];
 
 export default function AdminRoomsPage() {
-  const { user, loading, rooms, addRoom } = useBooking();
+  const { user, loading, rooms, addRoom, services } = useBooking();
   const [mounted, setMounted] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [formState, setFormState] = useState({
     name: "",
     description: "",
@@ -41,6 +44,10 @@ export default function AdminRoomsPage() {
     setMounted(true);
   }, []);
 
+  const serviceChoices = services.length
+    ? services.map((service) => ({ key: service.key as ServiceOption, label: service.name }))
+    : defaultServiceOptions;
+
   if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -53,9 +60,12 @@ export default function AdminRoomsPage() {
     redirect("/");
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addRoom({
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
+    const result = await addRoom({
       name: formState.name,
       description: formState.description,
       location: formState.location,
@@ -70,6 +80,13 @@ export default function AdminRoomsPage() {
       featured: false,
       capacity: 2,
     });
+    if (!result.success) {
+      setFormError(result.message || "Failed to add room");
+      setSubmitting(false);
+      return;
+    }
+
+    setFormSuccess(result.message || "Room added successfully");
     setFormState({
       name: "",
       description: "",
@@ -79,6 +96,7 @@ export default function AdminRoomsPage() {
       amenities: "WiFi, TV, Air conditioning",
       services: new Set<ServiceOption>(["wifi", "breakfast"]),
     });
+    setSubmitting(false);
     setIsFormOpen(false);
   };
 
@@ -212,7 +230,7 @@ export default function AdminRoomsPage() {
               <div>
                 <Label>Services</Label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-                  {serviceOptions.map((option) => (
+                  {serviceChoices.map((option) => (
                     <label
                       key={option.key}
                       className="flex items-center gap-2 text-sm font-medium text-slate-700 border rounded-lg px-3 py-2 cursor-pointer hover:bg-slate-50"
@@ -227,11 +245,19 @@ export default function AdminRoomsPage() {
                 </div>
               </div>
 
+              {formError && (
+                <p className="text-sm text-red-600">{formError}</p>
+              )}
+              {formSuccess && (
+                <p className="text-sm text-emerald-600">{formSuccess}</p>
+              )}
+
               <Button
                 type="submit"
+                disabled={submitting}
                 className="w-full bg-sky-600 hover:bg-sky-700 text-white"
               >
-                Add Room
+                {submitting ? "Adding..." : "Add Room"}
               </Button>
             </form>
           </div>

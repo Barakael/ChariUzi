@@ -37,7 +37,10 @@ Update the `.env.local` file with your Supabase credentials:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET=room-images
 ```
+
+Create a public Supabase Storage bucket matching `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` (default `room-images`) and enable "Public access" so uploaded room photos can be served directly.
 
 ### 3. Database Setup
 
