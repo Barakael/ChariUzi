@@ -40,6 +40,8 @@ export function BookingModal({ isOpen, onClose, roomId, defaultRange }: BookingM
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [latestReservationId, setLatestReservationId] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const [availability, setAvailability] = useState(false);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -47,12 +49,36 @@ export function BookingModal({ isOpen, onClose, roomId, defaultRange }: BookingM
       setStatusMessage(null);
       setIsSubmitting(false);
       setLatestReservationId(null);
+      return;
     }
+
+    setAuthOpen(false);
   }, [defaultRange, isOpen]);
 
-  const availability = useMemo(() => {
-    if (!room || !range?.from || !range?.to) return false;
-    return isRoomAvailable(room.id, range.from, range.to);
+  useEffect(() => {
+    let mounted = true;
+    if (!room || !range?.from || !range?.to) {
+      setAvailability(false);
+      return;
+    }
+
+    setCheckingAvailability(true);
+    isRoomAvailable(room.id, range.from, range.to)
+      .then((result) => {
+        if (!mounted) return;
+        setAvailability(result);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setAvailability(false);
+      })
+      .finally(() => {
+        if (mounted) setCheckingAvailability(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [room, range?.from, range?.to, isRoomAvailable]);
 
   const nights = useMemo(() => {
@@ -60,9 +86,10 @@ export function BookingModal({ isOpen, onClose, roomId, defaultRange }: BookingM
     return nightsBetween(range.from, range.to);
   }, [range?.from, range?.to]);
 
-  const totalPrice = room ? nights * room.pricePerNight : 0;
+  const nightlyRate = room ? room.pricePerNight ?? (room as any).price_per_night ?? 0 : 0;
+  const totalPrice = room ? nights * nightlyRate : 0;
 
-  const handleReserve = () => {
+  const handleReserve = async () => {
     if (!room || !range?.from || !range?.to) {
       setStatusMessage("Select dates to continue.");
       return;
@@ -74,7 +101,7 @@ export function BookingModal({ isOpen, onClose, roomId, defaultRange }: BookingM
     }
 
     setIsSubmitting(true);
-    const result = createReservation({
+    const result = await createReservation({
       roomId: room.id,
       startDate: range.from,
       endDate: range.to,
@@ -92,9 +119,9 @@ export function BookingModal({ isOpen, onClose, roomId, defaultRange }: BookingM
     setIsSubmitting(false);
   };
 
-  const handleCompletePayment = () => {
+  const handleCompletePayment = async () => {
     if (!latestReservationId) return;
-    markReservationPaid(latestReservationId);
+    await markReservationPaid(latestReservationId);
     setStatusMessage("Payment recorded. Your reservation is confirmed.");
   };
 
@@ -120,7 +147,7 @@ export function BookingModal({ isOpen, onClose, roomId, defaultRange }: BookingM
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-3 left-3">
-                  <Badge className="bg-sky-600 text-white border-0">${room.pricePerNight}/night</Badge>
+                  <Badge className="bg-sky-600 text-white border-0">${nightlyRate}/night</Badge>
                 </div>
               </div>
 
@@ -131,7 +158,7 @@ export function BookingModal({ isOpen, onClose, roomId, defaultRange }: BookingM
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">Rate</span>
-                  <span className="font-semibold">${room.pricePerNight}/night</span>
+                  <span className="font-semibold">${nightlyRate}/night</span>
                 </div>
                 <div className="flex items-center justify-between border-t pt-3">
                   <span className="text-sm text-slate-700">Total</span>
@@ -139,10 +166,16 @@ export function BookingModal({ isOpen, onClose, roomId, defaultRange }: BookingM
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Badge variant={availability ? "secondary" : "destructive"}>
-                    {availability ? "Available" : "Unavailable"}
+                    {checkingAvailability
+                      ? "Checking..."
+                      : availability
+                      ? "Available"
+                      : "Unavailable"}
                   </Badge>
                   <span className="text-slate-600">
-                    {availability
+                    {checkingAvailability
+                      ? "Verifying the selected dates."
+                      : availability
                       ? "This room is free for the selected dates."
                       : "Try different dates to find availability."}
                   </span>
@@ -203,7 +236,7 @@ export function BookingModal({ isOpen, onClose, roomId, defaultRange }: BookingM
                 <Button
                   type="button"
                   onClick={handleReserve}
-                  disabled={isSubmitting || !availability}
+                  disabled={isSubmitting || !availability || checkingAvailability}
                   className="w-full md:w-auto"
                 >
                   {user ? "Reserve & Pay" : "Sign in to reserve"}
