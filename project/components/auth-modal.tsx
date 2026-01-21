@@ -74,15 +74,15 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[70] bg-black/60 flex items-start sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto flex flex-col"
         onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
-        <div className={`relative p-8 text-white rounded-t-2xl ${
+        <div className={`relative p-6 sm:p-8 text-white rounded-t-2xl ${
           mode === 'signin' 
             ? 'bg-gradient-to-r from-sky-500 to-sky-600' 
             : 'bg-gradient-to-r from-emerald-500 to-emerald-600'
@@ -105,7 +105,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-8">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4 flex-1">
 
           {error && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -114,7 +114,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
           )}
 
           {mode === 'register' && (
-            <div className="mb-4">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Full Name
               </label>
@@ -134,7 +134,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
           )}
           
 
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Email Address
             </label>
@@ -157,7 +157,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
        
 
          
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Password
             </label>
@@ -178,7 +178,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
           </div>
 
           {mode === 'register' && (
-            <div className="mb-6">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Confirm Password
               </label>
@@ -198,7 +198,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
           )}
 
           {mode === 'signin' && (
-            <div className="mb-6 text-right">
+            <div className="text-right">
               <button
                 type="button"
                 className="text-sm text-sky-600 hover:text-sky-700 font-semibold transition-colors"
@@ -211,7 +211,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
           <button
             type="submit"
             disabled={submitting}
-            className={`w-full py-2 rounded-lg font-bold text-white transition-all mb-4 ${
+            className={`w-full py-3 rounded-lg font-bold text-white transition-all ${
               mode === 'signin'
                 ? 'bg-gradient-to-r from-sky-500 to-sky-600 hover:shadow-lg hover:shadow-sky-200'
                 : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-200'
@@ -226,7 +226,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
               : 'Create Account'}
           </button>
 
-          <div className="relative mb-4">
+          <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
             </div>
@@ -235,16 +235,18 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
             </div>
           </div>
 
-          <button
-            type="button"
-            className="w-full py-2.5 border-2 border-gray-200 rounded-lg font-semibold text-gray-700 hover:border-gray-300 transition-colors mb-4"
-          >
-            Continue with Google
-          </button>
+          <div className="space-y-3">
+            <button
+              type="button"
+              className="w-full py-2.5 border-2 border-gray-200 rounded-lg font-semibold text-gray-700 hover:border-gray-300 transition-colors"
+            >
+              Continue with Google
+            </button>
 
-          <p className="text-xs text-center text-gray-500 mb-4">
-            Tip: sign in with an email that contains "admin" to unlock the admin dashboard.
-          </p>
+            <p className="text-xs text-center text-gray-500">
+              Tip: sign in with an email that contains "admin" to unlock the admin dashboard.
+            </p>
+          </div>
 
           <p className="text-center text-gray-600">
             {mode === 'signin' ? (
@@ -274,7 +276,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
         </form>
 
         {/* Footer */}
-        <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
+        <div className="px-6 sm:px-8 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
           <p className="text-xs text-gray-500 text-center">
             By {mode === 'signin' ? 'signing in' : 'creating an account'}, you agree to our Terms of Service and Privacy Policy
           </p>
